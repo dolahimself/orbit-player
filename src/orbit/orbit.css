@@ -1,0 +1,812 @@
+/* ==========================================================================
+   Orbit — a circular control skin for Video.js 10
+   Tokens first; every rule below reads from them.
+   ========================================================================== */
+
+@property --cx { syntax: '<length>'; inherits: true; initial-value: 0px; }
+@property --cy { syntax: '<length>'; inherits: true; initial-value: 0px; }
+@property --orbit-size { syntax: '<length>'; inherits: true; initial-value: 160px; }
+
+orbit-controls {
+  --orbit-fill: rgb(14 14 16 / 0.64);
+  --orbit-fill-hover: rgb(36 36 40 / 0.74);
+  --orbit-fill-press: rgb(58 58 64 / 0.82);
+  --orbit-fg: #fff;
+  --orbit-fg-muted: rgb(255 255 255 / 0.62);
+  --orbit-track: rgb(255 255 255 / 0.2);
+  --orbit-buffer: rgb(255 255 255 / 0.36);
+  --orbit-hover: rgb(255 255 255 / 0.55);
+  --orbit-progress: #fff;
+  --orbit-surface: rgb(20 20 22 / 0.9);
+  --orbit-line: rgb(255 255 255 / 0.08);
+  --orbit-on-bg: rgb(255 255 255 / 0.94);
+  --orbit-on-fg: #111113;
+  --orbit-blur: 18px;
+  --orbit-font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.5, 0.64, 1);
+  --dur-press: 90ms;
+  --dur-fast: 160ms;
+  --dur: 240ms;
+  --dur-slow: 420ms;
+  --stagger: 26ms;
+
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  font-family: var(--orbit-font);
+  color: var(--orbit-fg);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  orbit-controls {
+    --dur-press: 0.01ms;
+    --dur-fast: 0.01ms;
+    --dur: 0.01ms;
+    --dur-slow: 0.01ms;
+    --stagger: 0ms;
+  }
+}
+
+orbit-controls button { font: inherit; color: inherit; }
+
+/* ---------------------------------------------------------------- shell */
+
+orbit-controls .orbit {
+  position: absolute;
+  left: calc(var(--cx) - var(--orbit-size) / 2);
+  top: calc(var(--cy) - var(--orbit-size) / 2);
+  width: var(--orbit-size);
+  height: var(--orbit-size);
+  touch-action: none;
+  transition:
+    left var(--dur-slow) var(--ease-out),
+    top var(--dur-slow) var(--ease-out),
+    width var(--dur-slow) var(--ease-out),
+    height var(--dur-slow) var(--ease-out),
+    opacity var(--dur) var(--ease-out),
+    scale var(--dur) var(--ease-out);
+}
+
+orbit-controls .orbit-glass {
+  position: absolute;
+  inset: 0;
+  -webkit-backdrop-filter: blur(var(--orbit-blur)) saturate(1.4);
+  backdrop-filter: blur(var(--orbit-blur)) saturate(1.4);
+  mask-size: 100% 100%;
+  -webkit-mask-size: 100% 100%;
+  pointer-events: none;
+}
+
+/* Idle: fade out calmly; come back instantly (the show transition is shorter). */
+orbit-controls[data-hidden] :is(.orbit, .orbit-fly, .orbit-volume, .orbit-panels) {
+  opacity: 0;
+  scale: 0.97;
+  transition-duration: var(--dur-slow);
+}
+orbit-controls[data-hidden] * { pointer-events: none !important; }
+
+/* A soft pool of shade behind the orbit keeps white glyphs readable on bright frames. */
+orbit-controls .orbit-scrim {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle calc(var(--orbit-size) * 1.15) at var(--cx) var(--cy),
+    rgb(0 0 0 / 0.34),
+    rgb(0 0 0 / 0.16) 55%,
+    transparent
+  );
+  transition: opacity var(--dur-slow) var(--ease-out);
+}
+orbit-controls[data-hidden] .orbit-scrim { opacity: 0; }
+
+/* ---------------------------------------------------------------- seek ring */
+
+orbit-controls .orbit-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 2;
+}
+orbit-controls .orbit-ring :is(circle, path) { fill: none; }
+orbit-controls .ring-base { stroke: var(--orbit-fill); }
+orbit-controls .ring-track { stroke: var(--orbit-track); }
+orbit-controls .ring-buffer { stroke: var(--orbit-buffer); stroke-linecap: butt; }
+orbit-controls .ring-hover { stroke: var(--orbit-hover); }
+orbit-controls .ring-fill {
+  stroke: var(--orbit-progress);
+  transition: stroke-dasharray 250ms linear;
+}
+orbit-controls[data-scrubbing] .ring-fill { transition: none; }
+orbit-controls .ring-volume { stroke: var(--orbit-progress); opacity: 0; transition: opacity var(--dur-fast); }
+orbit-controls .ring-wait {
+  stroke: var(--orbit-progress);
+  stroke-dasharray: 9 91;
+  stroke-linecap: round;
+  opacity: 0;
+  transform-box: view-box;
+  transform-origin: 100px 100px;
+  animation: orbit-spin 1.1s linear infinite;
+  transition: opacity var(--dur);
+}
+orbit-controls[data-waiting] .ring-wait { opacity: 0.9; }
+orbit-controls[data-waiting] .ring-fill { opacity: 0.55; }
+@keyframes orbit-spin { to { transform: rotate(360deg); } }
+
+orbit-controls .ring-hit {
+  stroke: transparent;
+  pointer-events: stroke;
+  cursor: pointer;
+}
+
+orbit-controls .ring-blob circle,
+orbit-controls .ring-ghost circle {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+orbit-controls .blob-dot {
+  fill: var(--orbit-progress);
+  stroke: rgb(0 0 0 / 0.28);
+  stroke-width: 1;
+  filter: drop-shadow(0 1px 3px rgb(0 0 0 / 0.45));
+  transition: scale var(--dur-fast) var(--ease-spring);
+}
+orbit-controls .blob-halo {
+  fill: rgb(255 255 255 / 0.2);
+  scale: 0;
+  transition: scale var(--dur) var(--ease-spring);
+}
+orbit-controls[data-ring-hover] .blob-halo,
+orbit-controls[data-ring-focus] .blob-halo { scale: 1; }
+orbit-controls[data-scrubbing] .blob-dot { scale: 1.2; }
+orbit-controls[data-scrubbing] .blob-halo { scale: 1.25; }
+
+orbit-controls .ring-ghost { opacity: 0; transition: opacity var(--dur-fast); }
+orbit-controls .ring-ghost circle { fill: rgb(255 255 255 / 0.85); }
+orbit-controls[data-ring-hover]:not([data-scrubbing]) .ring-ghost { opacity: 1; }
+
+/* Volume drag swaps the ring to show the level. */
+orbit-controls[data-vol-drag] .ring-volume { opacity: 1; }
+orbit-controls[data-vol-drag] :is(.ring-fill, .ring-buffer, .ring-blob, .ring-hover) { opacity: 0; }
+
+orbit-controls[data-ring-focus] .ring-track { stroke: rgb(255 255 255 / 0.45); }
+
+/* ---------------------------------------------------------------- buttons */
+
+orbit-controls .seg {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  pointer-events: none;
+  outline: none;
+  cursor: pointer;
+  z-index: 1;
+}
+orbit-controls .seg-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+orbit-controls .seg-shape {
+  fill: var(--orbit-fill);
+  pointer-events: visiblePainted;
+  transform-box: view-box;
+  transform-origin: 100px 100px;
+  transition:
+    fill var(--dur-fast) var(--ease-out),
+    scale var(--dur-fast) var(--ease-spring);
+}
+@media (hover: hover) {
+  orbit-controls .seg:hover .seg-shape { fill: var(--orbit-fill-hover); }
+  orbit-controls .orbit-center:hover { background: var(--orbit-fill-hover); }
+}
+orbit-controls .seg:active .seg-shape {
+  fill: var(--orbit-fill-press);
+  scale: 0.965;
+  transition-duration: var(--dur-press);
+}
+orbit-controls .seg:focus-visible .seg-shape {
+  stroke: var(--orbit-fg);
+  stroke-width: 2;
+}
+orbit-controls .seg[aria-expanded='true'] .seg-shape { fill: var(--orbit-fill-press); }
+
+orbit-controls .seg-icon {
+  position: absolute;
+  width: calc(var(--orbit-size) * 0.13);
+  height: calc(var(--orbit-size) * 0.13);
+  translate: -50% -50%;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  transition: scale var(--dur-fast) var(--ease-spring);
+}
+orbit-controls .seg-icon > svg,
+orbit-controls .seg-icon .vi > svg { width: 100%; height: 100%; display: block; }
+orbit-controls .seg-top .seg-icon { left: 50%; top: calc(50% - var(--icon-r)); }
+orbit-controls .seg-right .seg-icon { left: calc(50% + var(--icon-r)); top: 50%; }
+orbit-controls .seg-bottom .seg-icon { left: 50%; top: calc(50% + var(--icon-r)); }
+orbit-controls .seg-left .seg-icon { left: calc(50% - var(--icon-r)); top: 50%; }
+orbit-controls .seg:active .seg-icon { scale: 0.88; transition-duration: var(--dur-press); }
+
+/* Skip: the arrow turns a little in its direction on press. */
+orbit-controls .seek-icon > svg { transition: rotate var(--dur) var(--ease-spring); }
+orbit-controls .seek-icon.back > svg { scale: -1 1; }
+orbit-controls .seg-right:active .seek-icon > svg { rotate: 32deg; transition-duration: var(--dur-press); }
+orbit-controls .seg-left:active .seek-icon > svg { rotate: -32deg; transition-duration: var(--dur-press); }
+orbit-controls .seek-icon b {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: calc(var(--orbit-size) * 0.04);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  padding-top: 4%;
+}
+
+/* Menu bars fold into a cross. */
+orbit-controls .icon-menu .bar {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    translate var(--dur) var(--ease-out),
+    rotate var(--dur) var(--ease-out),
+    opacity var(--dur-fast);
+}
+orbit-controls[data-menu-open] .icon-menu .bar-1 { translate: 0 4px; rotate: 45deg; }
+orbit-controls[data-menu-open] .icon-menu .bar-2 { opacity: 0; }
+orbit-controls[data-menu-open] .icon-menu .bar-3 { translate: 0 -4px; rotate: -45deg; }
+
+/* Volume icons swap in place. */
+orbit-controls .vi { grid-area: 1 / 1; display: grid; width: 100%; height: 100%; opacity: 0; scale: 0.8; transition: opacity var(--dur-fast), scale var(--dur-fast) var(--ease-out); }
+orbit-controls[data-volume-level='off'] .vol-icon .vi-off,
+orbit-controls[data-volume-level='low'] .vol-icon .vi-low,
+orbit-controls[data-volume-level='high'] .vol-icon .vi-high { opacity: 1; scale: 1; }
+
+/* ---------------------------------------------------------------- centre */
+
+orbit-controls .orbit-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--center-d);
+  height: var(--center-d);
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: var(--orbit-fill);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  pointer-events: auto;
+  outline: none;
+  z-index: 1;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    scale var(--dur-fast) var(--ease-spring);
+}
+orbit-controls .orbit-center:active { scale: 0.94; background: var(--orbit-fill-press); transition-duration: var(--dur-press); }
+orbit-controls .orbit-center:focus-visible { box-shadow: 0 0 0 2px var(--orbit-fg); }
+
+orbit-controls .center-icon {
+  grid-area: 1 / 1;
+  width: calc(var(--orbit-size) * 0.16);
+  height: calc(var(--orbit-size) * 0.16);
+  translate: 0 -14%;
+  opacity: 0;
+  scale: 0.6;
+  transition:
+    opacity var(--dur-fast) var(--ease-out),
+    scale var(--dur) var(--ease-spring);
+}
+orbit-controls .center-icon svg { width: 100%; height: 100%; display: block; }
+orbit-controls .ci-play svg { translate: 6% 0; }
+.orbit-center[data-paused]:not([data-ended]) .ci-play,
+.orbit-center:not([data-paused]):not([data-ended]) .ci-pause,
+.orbit-center[data-ended] .ci-replay { opacity: 1; scale: 1; }
+
+orbit-controls .orbit-time {
+  position: absolute;
+  left: 50%;
+  bottom: 21%;
+  translate: -50% 0;
+  font-size: calc(var(--orbit-size) * 0.066);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  color: var(--orbit-fg-muted);
+  white-space: nowrap;
+  pointer-events: none;
+}
+orbit-controls[data-scrubbing] .orbit-time,
+orbit-controls[data-vol-drag] .orbit-time { color: var(--orbit-fg); }
+
+orbit-controls .ring-a11y {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- option row */
+
+orbit-controls .orbit-fly {
+  position: absolute;
+  left: var(--fly-x);
+  top: calc(var(--cy) - var(--orbit-size) / 2 - 12px);
+  translate: -50% -100%;
+  scale: var(--fly-scale, 1);
+  transform-origin: 50% 100%;
+  display: flex;
+  gap: 6px;
+  transition:
+    left var(--dur-slow) var(--ease-out),
+    top var(--dur-slow) var(--ease-out),
+    opacity var(--dur) var(--ease-out);
+}
+orbit-controls .fly-btn {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  padding: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--orbit-fill);
+  -webkit-backdrop-filter: blur(var(--orbit-blur)) saturate(1.4);
+  backdrop-filter: blur(var(--orbit-blur)) saturate(1.4);
+  cursor: pointer;
+  outline: none;
+  opacity: 0;
+  pointer-events: none;
+  /* Each button starts tucked behind the menu button and fans out. */
+  transform: translate(calc((2 - var(--i)) * 50px), 34px) scale(0.4);
+  transition:
+    transform var(--dur-slow) var(--ease-out),
+    opacity var(--dur) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+  transition-delay: calc((4 - var(--i)) * var(--stagger)), calc((4 - var(--i)) * var(--stagger)), 0s, 0s, 0s;
+}
+orbit-controls[data-menu-open] .fly-btn {
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+  transition-timing-function: var(--ease-spring), var(--ease-out), var(--ease-out), var(--ease-out), var(--ease-out);
+  transition-delay: calc(var(--i) * var(--stagger)), calc(var(--i) * var(--stagger)), 0s, 0s, 0s;
+}
+@media (hover: hover) {
+  orbit-controls .fly-btn:hover { background: var(--orbit-fill-hover); }
+}
+orbit-controls .fly-btn:active { scale: 0.92; }
+orbit-controls .fly-btn:focus-visible { box-shadow: 0 0 0 2px var(--orbit-fg); }
+orbit-controls .fly-btn[aria-expanded='true'] { box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 0.9); }
+orbit-controls .fly-btn[data-on] { background: var(--orbit-on-bg); color: var(--orbit-on-fg); }
+orbit-controls .fly-btn[data-on][aria-expanded='true'] { box-shadow: 0 0 0 2px rgb(255 255 255 / 0.35); }
+
+orbit-controls .fly-icon { display: grid; width: 18px; height: 18px; }
+orbit-controls .fly-icon > *, orbit-controls .fly-icon svg { grid-area: 1 / 1; width: 18px; height: 18px; display: block; }
+orbit-controls .fly-icon .sw-on { opacity: 0; scale: 0.7; }
+orbit-controls .fly-icon :is(.sw-on, .sw-off) { transition: opacity var(--dur-fast), scale var(--dur-fast) var(--ease-out); }
+orbit-controls .fly-btn[data-on] .sw-on { opacity: 1; scale: 1; }
+orbit-controls .fly-btn[data-on] .sw-off { opacity: 0; scale: 0.7; }
+orbit-controls .fly-btn .gear { transition: rotate var(--dur-slow) var(--ease-out); }
+orbit-controls .fly-btn[aria-expanded='true'] .gear { rotate: 60deg; }
+orbit-controls .fly-dot {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  width: 3px;
+  height: 3px;
+  margin-left: -1.5px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0;
+}
+orbit-controls .fly-btn[data-on] .fly-dot { opacity: 1; }
+
+orbit-controls .tip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  translate: -50% 4px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--orbit-surface);
+  color: var(--orbit-fg);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-fast), translate var(--dur-fast) var(--ease-out);
+}
+@media (hover: hover) {
+  orbit-controls:not([data-panel]) .fly-btn:hover .tip {
+    opacity: 1;
+    translate: -50% 0;
+    transition-delay: 380ms;
+  }
+}
+
+/* ---------------------------------------------------------------- panels */
+
+orbit-controls .orbit-panels {
+  position: absolute;
+  left: var(--panel-x);
+  top: calc(var(--cy) - var(--orbit-size) / 2 - 12px - 44px - 10px);
+  width: var(--panel-w);
+  height: 0;
+  translate: -50% 0;
+  z-index: 3;
+  transition:
+    left var(--dur-slow) var(--ease-out),
+    top var(--dur-slow) var(--ease-out),
+    opacity var(--dur);
+}
+orbit-controls .orbit-panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: var(--panel-max);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  border-radius: 16px;
+  background: var(--orbit-surface);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  backdrop-filter: blur(24px) saturate(1.5);
+  box-shadow:
+    0 0 0 1px var(--orbit-line),
+    0 18px 50px -12px rgb(0 0 0 / 0.55);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px) scale(0.97);
+  transform-origin: 50% 100%;
+  transition:
+    opacity var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out),
+    visibility 0s linear var(--dur-fast);
+}
+orbit-controls .orbit-panel[data-open] {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  pointer-events: auto;
+  transition:
+    opacity var(--dur) var(--ease-out),
+    transform var(--dur) var(--ease-spring),
+    visibility 0s;
+}
+
+orbit-controls .panel-head {
+  padding: 14px 16px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--orbit-fg-muted);
+}
+orbit-controls .panel-body { padding: 4px 6px 8px; }
+orbit-controls .panel-note {
+  margin: 0;
+  padding: 6px 10px 8px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--orbit-fg-muted);
+}
+orbit-controls .panel-note:empty { display: none; }
+
+orbit-controls .row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  text-align: left;
+  font-size: 14px;
+  line-height: 1.25;
+  cursor: pointer;
+  outline: none;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+orbit-controls .row-static { cursor: default; }
+@media (hover: hover) {
+  orbit-controls .row-btn:hover { background: rgb(255 255 255 / 0.07); }
+}
+orbit-controls .row-btn:active { background: rgb(255 255 255 / 0.11); }
+orbit-controls .row-btn:focus-visible { box-shadow: inset 0 0 0 2px var(--orbit-fg); }
+orbit-controls .row-label { flex: 1; padding: 8px 0; }
+orbit-controls .row-label small {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--orbit-fg-muted);
+}
+orbit-controls .row-meta { font-size: 13px; color: var(--orbit-fg-muted); font-variant-numeric: tabular-nums; }
+orbit-controls .row-check { width: 18px; height: 18px; flex: none; }
+orbit-controls .row-check svg { width: 18px; height: 18px; display: block; }
+orbit-controls .row-icon { width: 18px; height: 18px; flex: none; }
+orbit-controls .row-icon svg { width: 18px; height: 18px; display: block; }
+orbit-controls .row-kbd {
+  font: 500 11px/1 var(--orbit-font);
+  padding: 4px 6px;
+  border-radius: 5px;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.18);
+  color: var(--orbit-fg-muted);
+}
+
+media-cast-button.row .cast-on,
+media-cast-button.row[data-cast-state='connected'] .cast-off { display: none; }
+media-cast-button.row[data-cast-state='connected'] .cast-on { display: block; }
+media-pip-button.row .pip-on,
+media-pip-button.row[data-pip] .pip-off { display: none; }
+media-pip-button.row[data-pip] .pip-on { display: block; }
+media-fullscreen-button.row .fs-on,
+media-fullscreen-button.row[data-fullscreen] .fs-off { display: none; }
+media-fullscreen-button.row[data-fullscreen] .fs-on { display: block; }
+orbit-controls .row[data-disabled] { opacity: 0.45; cursor: not-allowed; }
+
+orbit-controls .field { padding: 8px 10px 6px; }
+orbit-controls .field-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--orbit-fg-muted);
+}
+orbit-controls .field + .row-switch { margin-top: 4px; }
+
+orbit-controls .seg-control {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 0.07);
+}
+orbit-controls .seg-control button {
+  height: 30px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--orbit-fg-muted);
+  cursor: pointer;
+  outline: none;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+@media (hover: hover) {
+  orbit-controls .seg-control button:hover { color: var(--orbit-fg); }
+}
+orbit-controls .seg-control button:focus-visible { box-shadow: inset 0 0 0 2px var(--orbit-fg); }
+orbit-controls .seg-control button[aria-checked='true'] { background: var(--orbit-on-bg); color: var(--orbit-on-fg); }
+
+orbit-controls .switch {
+  position: relative;
+  width: 36px;
+  height: 22px;
+  flex: none;
+  border-radius: 11px;
+  background: rgb(255 255 255 / 0.18);
+  transition: background var(--dur-fast) var(--ease-out);
+}
+orbit-controls .switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
+  transition: translate var(--dur) var(--ease-spring), background var(--dur-fast);
+}
+orbit-controls [aria-checked='true'] > .switch { background: var(--orbit-on-bg); }
+orbit-controls [aria-checked='true'] > .switch::after { translate: 14px 0; background: var(--orbit-on-fg); }
+
+/* Small players: panels become a centred sheet over the video. */
+orbit-controls[data-compact] .orbit-panels {
+  left: 50%;
+  top: 50%;
+  width: min(300px, calc(100% - 28px));
+}
+orbit-controls[data-compact] .orbit-panel {
+  bottom: auto;
+  top: 0;
+  transform-origin: 50% 0;
+  translate: 0 -50%;
+}
+orbit-controls[data-compact][data-panel] :is(.orbit, .orbit-fly) { opacity: 0.15; }
+
+/* ---------------------------------------------------------------- volume */
+
+orbit-controls .orbit-volume {
+  position: absolute;
+  left: var(--cx);
+  top: calc(var(--cy) + var(--orbit-size) / 2 + 12px);
+  width: min(232px, calc(100% - 28px));
+  height: 40px;
+  padding: 0 14px 0 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  background: var(--orbit-fill);
+  -webkit-backdrop-filter: blur(var(--orbit-blur)) saturate(1.4);
+  backdrop-filter: blur(var(--orbit-blur)) saturate(1.4);
+  opacity: 0;
+  translate: -50% -10px;
+  scale: 0.94;
+  transform-origin: 50% 0;
+  transition:
+    opacity var(--dur-fast) var(--ease-out),
+    translate var(--dur) var(--ease-out),
+    scale var(--dur) var(--ease-out),
+    left var(--dur-slow) var(--ease-out),
+    top var(--dur-slow) var(--ease-out);
+}
+orbit-controls[data-volume-open] .orbit-volume {
+  opacity: 1;
+  translate: -50% 0;
+  scale: 1;
+  pointer-events: auto;
+  transition-timing-function: var(--ease-out), var(--ease-spring), var(--ease-spring), var(--ease-out), var(--ease-out);
+}
+
+orbit-controls .vol-mute {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  cursor: pointer;
+  outline: none;
+  transition: background var(--dur-fast);
+}
+@media (hover: hover) {
+  orbit-controls .vol-mute:hover { background: rgb(255 255 255 / 0.1); }
+}
+orbit-controls .vol-mute:focus-visible { box-shadow: 0 0 0 2px var(--orbit-fg); }
+orbit-controls .vol-mute .vi { width: 18px; height: 18px; }
+orbit-controls .vol-mute .vi svg { width: 18px; height: 18px; display: block; }
+.vol-mute[data-volume-level='off'] .vi-off,
+.vol-mute[data-volume-level='low'] .vi-low,
+.vol-mute:is([data-volume-level='medium'], [data-volume-level='high']) .vi-high { opacity: 1; scale: 1; }
+
+orbit-controls .vol-slider {
+  position: relative;
+  flex: 1;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  outline: none;
+  touch-action: none;
+}
+orbit-controls .vol-track {
+  position: relative;
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 0.24);
+  overflow: hidden;
+  transition: height var(--dur-fast) var(--ease-out);
+}
+orbit-controls .vol-slider[data-interactive] .vol-track { height: 6px; }
+orbit-controls .vol-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--media-slider-fill, 0%);
+  background: var(--orbit-progress);
+}
+orbit-controls .vol-thumb {
+  position: absolute;
+  top: 50%;
+  left: var(--media-slider-fill, 0%);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.35);
+  translate: -50% -50%;
+  scale: 0.8;
+  transition: scale var(--dur-fast) var(--ease-spring);
+}
+orbit-controls .vol-slider[data-interactive] .vol-thumb { scale: 1; }
+orbit-controls .vol-slider:focus-visible .vol-thumb { box-shadow: 0 0 0 2px var(--orbit-on-fg), 0 0 0 4px #fff; }
+orbit-controls .vol-value {
+  width: 24px;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--orbit-fg-muted);
+}
+
+/* ---------------------------------------------------------------- seek preview */
+
+orbit-controls .orbit-preview {
+  position: absolute;
+  left: var(--pv-x);
+  top: var(--pv-y);
+  width: var(--pv-w, 176px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  translate: -50% -50%;
+  opacity: 0;
+  scale: 0.9;
+  z-index: 4;
+  transition:
+    opacity var(--dur-fast) var(--ease-out),
+    scale var(--dur-fast) var(--ease-out);
+}
+orbit-controls .orbit-preview[data-show] { opacity: 1; scale: 1; }
+orbit-controls .preview-frame {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #000;
+  box-shadow:
+    0 0 0 2px rgb(255 255 255 / 0.92),
+    0 12px 32px -8px rgb(0 0 0 / 0.6);
+}
+orbit-controls .preview-frame video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0;
+  transition: opacity var(--dur-fast);
+}
+orbit-controls .orbit-preview[data-ready] video { opacity: 1; }
+orbit-controls .preview-time {
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgb(0 0 0 / 0.72);
+  font-size: 12.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+orbit-controls .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

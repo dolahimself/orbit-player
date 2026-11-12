@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b0b0c" />
+    <meta name="description" content="Four Blender open movies, played with Orbit, a circular control skin for Video.js 10." />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>Orbit</title>
+  </head>
+  <body>
+    <div class="ambient" aria-hidden="true">
+      <img alt="" data-layer="a" />
+      <img alt="" data-layer="b" />
+    </div>
+
+    <div class="relative z-[1] flex min-h-svh flex-col">
+      <header class="flex h-16 items-center justify-between px-5 sm:px-10">
+        <a href="/" class="flex items-center gap-2.5 text-[15px] font-semibold tracking-[-0.01em]" aria-label="Orbit, home">
+          <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+            <circle cx="11" cy="11" r="9.25" fill="none" stroke="currentColor" stroke-width="2.5" />
+            <circle cx="11" cy="11" r="3.5" fill="currentColor" />
+          </svg>
+          Orbit
+        </a>
+        <div class="flex items-center gap-6 text-[13px] text-muted">
+          <span class="hidden sm:inline">Blender open movies</span>
+          <span class="tabular-nums text-fg" id="counter" aria-live="polite">01 <span class="text-faint">/ 04</span></span>
+        </div>
+      </header>
+
+      <main class="flex-1 pb-[230px]">
+        <section class="stage mt-2 sm:mt-3" id="stage" aria-label="Films">
+          <div id="cards"></div>
+
+          <div class="player" id="player">
+            <video-player>
+              <media-container>
+                <video playsinline preload="metadata"></video>
+
+                <media-gesture type="tap" action="togglePaused" pointer="mouse"></media-gesture>
+                <media-gesture type="tap" action="toggleControls" pointer="touch"></media-gesture>
+                <media-gesture type="doubletap" action="seekStep" region="left" value="10" pointer="touch"></media-gesture>
+                <media-gesture type="doubletap" action="seekStep" region="right" value="10" pointer="touch"></media-gesture>
+
+                <media-hotkey keys="Space" action="togglePaused" target="document"></media-hotkey>
+                <media-hotkey keys="k" action="togglePaused" target="document"></media-hotkey>
+                <media-hotkey keys="m" action="toggleMuted" target="document"></media-hotkey>
+                <media-hotkey keys="f" action="toggleFullscreen" target="document"></media-hotkey>
+                <media-hotkey keys="c" action="toggleSubtitles" target="document"></media-hotkey>
+                <media-hotkey keys="p" action="togglePictureInPicture" target="document"></media-hotkey>
+                <media-hotkey keys="ArrowLeft" action="seekStep" value="-5" target="document"></media-hotkey>
+                <media-hotkey keys="ArrowRight" action="seekStep" value="5" target="document"></media-hotkey>
+                <media-hotkey keys="j" action="seekStep" value="-10" target="document"></media-hotkey>
+                <media-hotkey keys="l" action="seekStep" value="10" target="document"></media-hotkey>
+                <media-hotkey keys="ArrowUp" action="volumeStep" value="0.05" target="document"></media-hotkey>
+                <media-hotkey keys="ArrowDown" action="volumeStep" value="-0.05" target="document"></media-hotkey>
+                <media-hotkey keys="0-9" action="seekToPercent" target="document"></media-hotkey>
+
+                <orbit-controls></orbit-controls>
+              </media-container>
+            </video-player>
+            <div class="toast" role="status"></div>
+          </div>
+        </section>
+
+        <section class="details mx-auto mt-10 grid w-(--pw) max-w-full gap-10 sm:mt-12 md:grid-cols-2 lg:grid-cols-[1fr_340px_1fr] lg:gap-6" id="details" aria-live="polite">
+          <div style="--d: 0">
+            <p class="text-[13px] text-muted" data-f="eyebrow"></p>
+            <h1 class="mt-2 text-[34px] leading-[1.05] font-semibold tracking-[-0.025em] text-balance sm:text-[40px]" data-f="title"></h1>
+            <p class="mt-3 max-w-[48ch] text-[16px] leading-snug text-fg/80" data-f="tagline"></p>
+            <ul class="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2 text-[13px] text-muted" data-f="meta"></ul>
+            <p class="mt-6 max-w-[62ch] text-[15px] leading-[1.7] text-fg/70" data-f="synopsis"></p>
+          </div>
+          <div class="hidden lg:block" aria-hidden="true"></div>
+          <div style="--d: 1" class="lg:pl-6">
+            <h2 class="text-[13px] text-muted">Credits</h2>
+            <dl class="mt-4 grid grid-cols-[88px_1fr] gap-x-4 gap-y-3 text-[14px]" data-f="credits"></dl>
+            <div class="mt-8 border-t border-line pt-6">
+              <h2 class="text-[13px] text-muted">Behind the film</h2>
+              <ul class="mt-3 space-y-2.5 text-[14px] leading-relaxed text-fg/75" data-f="facts"></ul>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="dial" id="dial" role="slider" tabindex="0" aria-label="Choose a film" aria-valuemin="1" aria-valuemax="4" aria-valuenow="1">
+      <div class="dial-face">
+        <div class="dial-notch" aria-hidden="true"></div>
+        <div class="dial-rotor" aria-hidden="true">
+          <svg class="dial-ticks" viewBox="-180 -180 360 360"></svg>
+        </div>
+        <div class="dial-items"></div>
+        <div class="dial-center">
+          <div class="dial-index" data-f="dial-index">01 <span>/ 04</span></div>
+          <div class="dial-title" data-f="dial-title"></div>
+          <div class="dial-hint">Spin to switch</div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
