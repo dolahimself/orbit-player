@@ -67,8 +67,7 @@ public/captions/       English and Spanish production-notes tracks for each film
 - Each direction button is its own SVG shape with a constant-width gap and
   rounded corners, so the buttons read as separate pieces.
 - The frosted backdrop is masked to the button shapes, so the gaps stay clear.
-- The ring preview is a second, muted `<video>` that seeks to the hovered time.
-  This works with any MP4 and needs no thumbnail sprite or CORS headers.
+- The ring preview is a `<media-thumbnail>` reading the Mux storyboard track.
 - Controls hide on idle through the store's `controlsVisible`, and stay locked
   on screen while a menu is open or you're scrubbing.
 - Every duration goes through motion tokens that collapse under
@@ -81,8 +80,16 @@ To drop the skin into another Video.js 10 player, copy `src/orbit/`, import
 ## Media
 
 The films are Blender Foundation open movies: *Sintel*, *Tears of Steel*,
-*Big Buck Bunny* and *Elephants Dream*. They're released under Creative Commons
-Attribution and streamed from Google's public sample bucket
-(`commondatastorage.googleapis.com/gtv-videos-bucket`). If a film can't be
-reached, the player switches to a backup clip and says so.
+*Big Buck Bunny* and *Elephants Dream*, released under Creative Commons
+Attribution and streamed from [Mux](https://www.mux.com/docs). Each film is a
+Mux playback ID in `src/app/films.ts`, played by Video.js's `<mux-video>`:
+
+- Stream: `https://stream.mux.com/{PLAYBACK_ID}.m3u8`
+- Poster and stage card: `https://image.mux.com/{PLAYBACK_ID}/thumbnail.webp`
+- Dial thumbnail: the same image, cropped square
+- Seek previews: the Mux storyboard, which `<mux-video>` adds as a track and
+  `<media-thumbnail>` reads
+
+If a stream can't be reached, the player switches to a backup clip and says so.
+
 # orbit

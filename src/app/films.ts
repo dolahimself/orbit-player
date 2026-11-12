@@ -16,17 +16,27 @@ export interface Film {
   synopsis: string;
   credits: Credit[];
   facts: string[];
+  /** Mux playback ID. */
+  playbackId: string;
   src: string;
   poster: string;
+  /** Small Mux thumbnail for the dial. */
+  thumb: string;
   /** Hue used to tint the page backdrop while this film is in focus. */
   tint: string;
 }
 
-const BUCKET = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample';
+/** Stream and image URLs for a Mux playback ID (https://www.mux.com/docs). */
+const mux = (playbackId: string) => ({
+  playbackId,
+  src: `https://stream.mux.com/${playbackId}.m3u8`,
+  poster: `https://image.mux.com/${playbackId}/thumbnail.webp?width=1280`,
+  thumb: `https://image.mux.com/${playbackId}/thumbnail.webp?width=160&height=160&fit_mode=smartcrop`,
+});
 
 /**
  * Four films from the Blender Foundation's open movie projects, all released
- * under Creative Commons Attribution and hosted on Google's public sample bucket.
+ * under Creative Commons Attribution and streamed from Mux.
  */
 export const films: Film[] = [
   {
@@ -50,8 +60,7 @@ export const films: Film[] = [
       'Third open movie from the Blender Institute in Amsterdam.',
       'Production pushed Blender 2.5 forward, including its new sculpting tools.',
     ],
-    src: `${BUCKET}/Sintel.mp4`,
-    poster: `${BUCKET}/images/Sintel.jpg`,
+    ...mux('31iOy9KXbfCKMwObqF6pWRnFzzCWQ4CquJTuGn02rJFo'),
     tint: '24 30% 9%',
   },
   {
@@ -75,8 +84,7 @@ export const films: Film[] = [
       'The first Blender open movie shot with live actors.',
       'Built to develop and test Blender’s camera tracking and compositing.',
     ],
-    src: `${BUCKET}/TearsOfSteel.mp4`,
-    poster: `${BUCKET}/images/TearsOfSteel.jpg`,
+    ...mux('TjHvp7heA4GNlk9nQ0202yFE0052XKl5y015HANsmTWwn600'),
     tint: '205 25% 9%',
   },
   {
@@ -100,8 +108,7 @@ export const films: Film[] = [
       'One of the most used test clips on the web.',
       'Its fur and grass shots drove major work on Blender’s hair rendering.',
     ],
-    src: `${BUCKET}/BigBuckBunny.mp4`,
-    poster: `${BUCKET}/images/BigBuckBunny.jpg`,
+    ...mux('Dc0000cztHXVRXMuWRd00xbjVoeZ00nP6yE00rArPObSC81w'),
     tint: '95 22% 9%',
   },
   {
@@ -125,12 +132,11 @@ export const films: Film[] = [
       'The first open movie: every source file was published with the film.',
       'Made almost entirely with open-source software.',
     ],
-    src: `${BUCKET}/ElephantsDream.mp4`,
-    poster: `${BUCKET}/images/ElephantsDream.jpg`,
+    ...mux('Y1hb004UtlQSooV1KRx9xOZfBiLSNATcHo2wm4UHNS8g'),
     tint: '275 14% 9%',
   },
 ];
 
 /** Plays when a primary source fails to load. */
 export const FALLBACK_SRC =
-  'https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4';
+  'https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8';

@@ -4,6 +4,7 @@ import '@videojs/html/video/player';
 import '@videojs/html/ui/container';
 import '@videojs/html/ui/gesture';
 import '@videojs/html/ui/hotkey';
+import '@videojs/html/media/mux-video';
 import './orbit/orbit-controls';
 
 import { films, FALLBACK_SRC, type Film } from './app/films';
@@ -12,7 +13,7 @@ import { createWheel } from './app/wheel';
 const $ = <T extends Element = HTMLElement>(sel: string, root: ParentNode = document) =>
   root.querySelector(sel) as T;
 
-const video = $<HTMLVideoElement>('#player video');
+const video = $<HTMLVideoElement>('#player mux-video');
 const orbit = $('orbit-controls') as HTMLElementTagNameMap['orbit-controls'];
 const player = $('#player');
 const toast = $('.toast', player);
@@ -44,7 +45,7 @@ const itemsRoot = $('.dial-items', dial);
 itemsRoot.innerHTML = films
   .map(
     (f, i) =>
-      `<button type="button" class="dial-item" data-index="${i}" tabindex="-1" aria-label="${f.title}"><img src="${f.poster}" alt="" /></button>`,
+      `<button type="button" class="dial-item" data-index="${i}" tabindex="-1" aria-label="${f.title}"><img src="${f.thumb}" alt="" /></button>`,
   )
   .join('');
 const dialItems = [...itemsRoot.querySelectorAll<HTMLElement>('.dial-item')];

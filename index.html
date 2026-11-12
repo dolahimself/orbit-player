@@ -36,7 +36,7 @@
           <div class="player" id="player">
             <video-player>
               <media-container>
-                <video playsinline preload="metadata"></video>
+                <mux-video playsinline preload="metadata" crossorigin="anonymous"></mux-video>
 
                 <media-gesture type="tap" action="togglePaused" pointer="mouse"></media-gesture>
                 <media-gesture type="tap" action="toggleControls" pointer="touch"></media-gesture>
@@ -81,6 +81,90 @@
               <ul class="mt-3 space-y-2.5 text-[14px] leading-relaxed text-fg/75" data-f="facts"></ul>
             </div>
           </div>
+        </section>
+
+        <section class="mx-auto mt-24 w-(--pw) max-w-full border-t border-line pt-12" id="about" aria-labelledby="a11y-title">
+          <div class="grid gap-12 lg:grid-cols-[1.5fr_1fr] lg:gap-16">
+            <div>
+              <p class="text-[13px] text-muted">Accessibility</p>
+              <h2 class="mt-2 text-[24px] font-semibold tracking-[-0.02em] text-balance" id="a11y-title">Works with a keyboard, a screen reader or a thumb</h2>
+              <ul class="mt-8 grid gap-x-10 gap-y-7 sm:grid-cols-2">
+              <li>
+                <h3 class="text-[14px] font-semibold">Every control by keyboard</h3>
+                <p class="mt-1.5 text-[14px] leading-relaxed text-fg/65">Tab reaches each button, slider and menu option in the order you see them, and every focused part gets the same white ring.</p>
+              </li>
+              <li>
+                <h3 class="text-[14px] font-semibold">Clear names for screen readers</h3>
+                <p class="mt-1.5 text-[14px] leading-relaxed text-fg/65">Buttons say what they do, like “Seek forward 10 seconds”. The seek ring is a slider that reads out “1:04 of 14:48”.</p>
+              </li>
+              <li>
+                <h3 class="text-[14px] font-semibold">Subtitles in two languages</h3>
+                <p class="mt-1.5 text-[14px] leading-relaxed text-fg/65">Each film has English and Spanish tracks. Turn them on from the options menu or press C.</p>
+              </li>
+              <li>
+                <h3 class="text-[14px] font-semibold">Respects reduced motion</h3>
+                <p class="mt-1.5 text-[14px] leading-relaxed text-fg/65">With reduced motion on in your system settings, the fan-out, springs and wheel animations are switched off.</p>
+              </li>
+              <li>
+                <h3 class="text-[14px] font-semibold">Big enough to hit</h3>
+                <p class="mt-1.5 text-[14px] leading-relaxed text-fg/65">Option buttons are 44 px. Sliders have a hit area taller than the line you see, and nothing overlaps on touch screens.</p>
+              </li>
+              <li>
+                <h3 class="text-[14px] font-semibold">More than colour</h3>
+                <p class="mt-1.5 text-[14px] leading-relaxed text-fg/65">When something is on, its icon changes shape and gets a dot, so subtitles, casting and full screen never rely on colour alone.</p>
+              </li>
+              </ul>
+            </div>
+            <div class="self-start rounded-2xl bg-raised p-6 shadow-[inset_0_0_0_1px_var(--color-line)]">
+              <h3 class="text-[14px] font-semibold">Keyboard shortcuts</h3>
+              <p class="mt-1 text-[13px] text-muted">Work anywhere on the page. With the dial focused, the arrow keys change films.</p>
+              <dl class="mt-4 divide-y divide-line text-[14px]">
+                <div class="flex items-center justify-between gap-4 py-2.5"><dt class="text-fg/75">Play or pause</dt><dd class="flex shrink-0 gap-1.5"><kbd class="kbd">Space</kbd> <kbd class="kbd">K</kbd></dd></div>
+                <div class="flex items-center justify-between gap-4 py-2.5"><dt class="text-fg/75">Back or forward 10 s</dt><dd class="flex shrink-0 gap-1.5"><kbd class="kbd">J</kbd> <kbd class="kbd">L</kbd></dd></div>
+                <div class="flex items-center justify-between gap-4 py-2.5"><dt class="text-fg/75">Back or forward 5 s</dt><dd class="flex shrink-0 gap-1.5"><kbd class="kbd">←</kbd> <kbd class="kbd">→</kbd></dd></div>
+                <div class="flex items-center justify-between gap-4 py-2.5"><dt class="text-fg/75">Volume up or down</dt><dd class="flex shrink-0 gap-1.5"><kbd class="kbd">↑</kbd> <kbd class="kbd">↓</kbd></dd></div>
+                <div class="flex items-center justify-between gap-4 py-2.5"><dt class="text-fg/75">Mute</dt><dd class="flex shrink-0 gap-1.5"><kbd class="kbd">M</kbd></dd></div>
+                <div class="flex items-center justify-between gap-4 py-2.5"><dt class="text-fg/75">Subtitles</dt><dd class="flex shrink-0 gap-1.5"><kbd class="kbd">C</kbd></dd></div>
+                <div class="flex items-center justify-between gap-4 py-2.5"><dt class="text-fg/75">Full screen</dt><dd class="flex shrink-0 gap-1.5"><kbd class="kbd">F</kbd></dd></div>
+                <div class="flex items-center justify-between gap-4 py-2.5"><dt class="text-fg/75">Picture in picture</dt><dd class="flex shrink-0 gap-1.5"><kbd class="kbd">P</kbd></dd></div>
+                <div class="flex items-center justify-between gap-4 py-2.5"><dt class="text-fg/75">Jump to 0–90%</dt><dd class="flex shrink-0 gap-1.5"><kbd class="kbd">0–9</kbd></dd></div>
+                <div class="flex items-center justify-between gap-4 py-2.5"><dt class="text-fg/75">Close menus</dt><dd class="flex shrink-0 gap-1.5"><kbd class="kbd">Esc</kbd></dd></div>
+              </dl>
+            </div>
+          </div>
+
+          <div class="mt-20">
+            <p class="text-[13px] text-muted">Features</p>
+            <h2 class="mt-2 text-[24px] font-semibold tracking-[-0.02em] text-balance">One round control instead of a control bar</h2>
+            <ul class="mt-8 grid gap-x-10 gap-y-7 sm:grid-cols-2 lg:grid-cols-3">
+              <li>
+                <h3 class="text-[14px] font-semibold">Seek around the ring</h3>
+                <p class="mt-1.5 text-[14px] leading-relaxed text-fg/65">Hover the ring to preview any moment from the Mux storyboard. Drag around it to scrub, with the time following your finger.</p>
+              </li>
+              <li>
+                <h3 class="text-[14px] font-semibold">Click-wheel volume</h3>
+                <p class="mt-1.5 text-[14px] leading-relaxed text-fg/65">Tap the bottom button for a slider, or press and hold it and circle clockwise to turn the volume up, like an iPod.</p>
+              </li>
+              <li>
+                <h3 class="text-[14px] font-semibold">Options that fan out</h3>
+                <p class="mt-1.5 text-[14px] leading-relaxed text-fg/65">The top button opens subtitles, settings, cast, picture in picture and full screen, each with its own panel above the control.</p>
+              </li>
+              <li>
+                <h3 class="text-[14px] font-semibold">Streamed from Mux</h3>
+                <p class="mt-1.5 text-[14px] leading-relaxed text-fg/65">Each film plays as adaptive HLS from Mux, so picture quality follows your connection, and the seek previews come from its storyboards.</p>
+              </li>
+              <li>
+                <h3 class="text-[14px] font-semibold">Spin to switch films</h3>
+                <p class="mt-1.5 text-[14px] leading-relaxed text-fg/65">Turn the dial at the bottom of the screen. The films swing round with it and the player picks up where the wheel stops.</p>
+              </li>
+              <li>
+                <h3 class="text-[14px] font-semibold">Put the control where you like</h3>
+                <p class="mt-1.5 text-[14px] leading-relaxed text-fg/65">Choose small, medium or large, and centre, bottom or corner, in Settings. Orbit remembers your choice in this browser.</p>
+              </li>
+            </ul>
+          </div>
+
+          <p class="mt-20 text-[13px] text-faint">Films by the Blender Foundation, released under Creative Commons Attribution. Player built on Video.js 10, video streamed by Mux.</p>
         </section>
       </main>
     </div>

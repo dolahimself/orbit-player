@@ -6,6 +6,7 @@
       "name": "orbit-player",
       "dependencies": {
         "@videojs/html": "10.3.0",
+        "@videojs/mux-video": "10.3.0",
       },
       "devDependencies": {
         "@tailwindcss/vite": "^4.3.5",
@@ -116,9 +117,13 @@
 
     "@videojs/element": ["@videojs/element@10.3.0", "", { "dependencies": { "@lit/context": "^1.1.0", "@videojs/utils": "10.3.0" } }, "sha512-xDX521q/S37QEDXtGfTPtmqQQWAN1IDZ72h34AdEh0M2oThK1uvfthsOzVWnwxNoceRlpQ1cyyfRvZwwCf03mg=="],
 
+    "@videojs/hlsjs-video": ["@videojs/hlsjs-video@10.3.0", "", { "dependencies": { "@videojs/media": "10.3.0", "@videojs/native-hls-video": "10.3.0", "@videojs/spf": "10.3.0", "@videojs/utils": "10.3.0", "hls.js": "1.7.3" } }, "sha512-H8gEsvXg01IDK8GQCJa+KVq3uu6ESfybQmHgFOyB3rmDSV4THB4dZ+Y7VL+P0Lfp4vMDzcVCeDw/FQ5QEXgnqA=="],
+
     "@videojs/html": ["@videojs/html@10.3.0", "", { "dependencies": { "@videojs/core": "10.3.0", "@videojs/element": "10.3.0", "@videojs/media": "10.3.0", "@videojs/native-hls-video": "10.3.0", "@videojs/spf": "10.3.0", "@videojs/store": "10.3.0", "@videojs/utils": "10.3.0" }, "peerDependencies": { "@videojs/cloudflare-video": "10.3.0", "@videojs/dailymotion-video": "10.3.0", "@videojs/dash-video": "10.3.0", "@videojs/google-analytics": "10.3.0", "@videojs/google-cast": "10.3.0", "@videojs/hlsjs-video": "10.3.0", "@videojs/mixcloud-audio": "10.3.0", "@videojs/mux-audio": "10.3.0", "@videojs/mux-data": "10.3.0", "@videojs/mux-video": "10.3.0", "@videojs/playerjs-video": "10.3.0", "@videojs/shaka-video": "10.3.0", "@videojs/soundcloud-audio": "10.3.0", "@videojs/spotify-audio": "10.3.0", "@videojs/tiktok-video": "10.3.0", "@videojs/twitch-video": "10.3.0", "@videojs/vimeo-video": "10.3.0", "@videojs/wistia-video": "10.3.0", "@videojs/youtube-video": "10.3.0" }, "optionalPeers": ["@videojs/cloudflare-video", "@videojs/dailymotion-video", "@videojs/dash-video", "@videojs/google-analytics", "@videojs/google-cast", "@videojs/hlsjs-video", "@videojs/mixcloud-audio", "@videojs/mux-audio", "@videojs/mux-data", "@videojs/mux-video", "@videojs/playerjs-video", "@videojs/shaka-video", "@videojs/soundcloud-audio", "@videojs/spotify-audio", "@videojs/tiktok-video", "@videojs/twitch-video", "@videojs/vimeo-video", "@videojs/wistia-video", "@videojs/youtube-video"] }, "sha512-wfhbEaCJMSOU5bwNN2iYuXIb9Nq7QEpKVcBEq50S/OCv24lTk6DxVbfCAnZroJGFxopBs7Fykl5jMP8ZcdVlZA=="],
 
     "@videojs/media": ["@videojs/media@10.3.0", "", { "dependencies": { "@videojs/utils": "10.3.0" } }, "sha512-xZ/33XPTLcQwIDW3b0GSASGYDzXwrqWZjlYdfn3dh/344/7G80wjwDkbgech8+LnL9yEAHGRQ9u+Wue4c/pQZw=="],
+
+    "@videojs/mux-video": ["@videojs/mux-video@10.3.0", "", { "dependencies": { "@videojs/hlsjs-video": "10.3.0", "@videojs/media": "10.3.0", "@videojs/spf": "10.3.0", "@videojs/utils": "10.3.0" } }, "sha512-iVRJ3r8UieWxjlz8da8U+2SXnzYjT8wUUBG1gKG/EFVJpHtd/rvJoTOOqP8NAd6Xo4KX9fpAgksicFjjX3xkWA=="],
 
     "@videojs/native-hls-video": ["@videojs/native-hls-video@10.3.0", "", { "dependencies": { "@videojs/media": "10.3.0", "@videojs/spf": "10.3.0", "@videojs/utils": "10.3.0" } }, "sha512-5UYFBXcnpSwxBfZ2WkTCH+ehftRHCTa301y3Ks+tCiKTT1LjrTlsrqwHqrLTuKVGhaHHDXTBP8FybmgHa1xxag=="],
 
@@ -137,6 +142,8 @@
     "fsevents": ["fsevents@2.3.3", "", { "os": "darwin", "hasInstallScript": true }, "sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw=="],
 
     "graceful-fs": ["graceful-fs@4.2.11", "", {}, "sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ=="],
+
+    "hls.js": ["hls.js@1.7.3", "", {}, "sha512-MsPlx6yVW4Qv4C7mEVou4/gk/5cN2dVxOTnrNjPSmyH2f0Ln+/UkG10Ax1PE6OvrmTVPKgQYozTtBaPOuCzq7A=="],
 
     "jiti": ["jiti@2.7.0", "", { "bin": { "jiti": "lib/jiti-cli.mjs" } }, "sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ=="],
 

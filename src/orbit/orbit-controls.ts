@@ -13,7 +13,6 @@ import {
   selectFullscreen,
   selectRemotePlayback,
   selectQuality,
-  selectSource,
   type PropertyValues,
 } from '@videojs/html';
 
@@ -28,6 +27,7 @@ import '@videojs/html/ui/pip-button';
 import '@videojs/html/ui/fullscreen-button';
 import '@videojs/html/ui/cast-button';
 import '@videojs/html/ui/airplay-button';
+import '@videojs/html/ui/thumbnail';
 
 import {
   C,
@@ -116,7 +116,6 @@ export class OrbitControlsElement extends UIElement {
   #fs = new PlayerController(this, playerContext, selectFullscreen);
   #remote = new PlayerController(this, playerContext, selectRemotePlayback);
   #quality = new PlayerController(this, playerContext, selectQuality);
-  #source = new PlayerController(this, playerContext, selectSource);
 
   #built = false;
   #abort: AbortController | null = null;
@@ -147,8 +146,6 @@ export class OrbitControlsElement extends UIElement {
   // Cached render keys so panels only rebuild when their inputs change.
   #captionsKey = '';
   #settingsKey = '';
-  #previewSrc = '';
-  #previewPending: number | null = null;
 
   // Layout
   #W = 0;
@@ -176,7 +173,7 @@ export class OrbitControlsElement extends UIElement {
     volume: HTMLElement;
     volumeValue: HTMLElement;
     preview: HTMLElement;
-    previewVideo: HTMLVideoElement;
+    previewThumb: HTMLElement & { time: number };
     previewTime: HTMLElement;
     ringA11y: HTMLElement;
     live: HTMLElement;
@@ -360,7 +357,7 @@ export class OrbitControlsElement extends UIElement {
       </div>
 
       <div class="orbit-preview" aria-hidden="true">
-        <div class="preview-frame"><video muted playsinline preload="auto" disablepictureinpicture disableremoteplayback></video></div>
+        <div class="preview-frame"><media-thumbnail class="preview-thumb"></media-thumbnail></div>
         <span class="preview-time">0:00</span>
       </div>
 
@@ -388,7 +385,7 @@ export class OrbitControlsElement extends UIElement {
       volume: q('.orbit-volume'),
       volumeValue: q('.vol-value'),
       preview: q('.orbit-preview'),
-      previewVideo: q('.orbit-preview video'),
+      previewThumb: q('.preview-thumb'),
       previewTime: q('.preview-time'),
       ringA11y: q('.ring-a11y'),
       live: q('[data-slot="live"]'),
@@ -474,15 +471,6 @@ export class OrbitControlsElement extends UIElement {
     on(e.ringA11y, 'focus', () => this.toggleAttribute('data-ring-focus', true));
     on(e.ringA11y, 'blur', () => this.toggleAttribute('data-ring-focus', false));
 
-    // Preview video seeks one frame at a time; queue the latest request
-    on(e.previewVideo, 'seeked', () => {
-      e.preview.toggleAttribute('data-ready', true);
-      if (this.#previewPending != null) {
-        const t = this.#previewPending;
-        this.#previewPending = null;
-        e.previewVideo.currentTime = t;
-      }
-    });
 
     // Escape closes the innermost popup; clicks outside close everything
     on(this.parentElement ?? this, 'keydown', (ev: KeyboardEvent) => {
@@ -581,7 +569,7 @@ export class OrbitControlsElement extends UIElement {
   }
 
   #video(): HTMLVideoElement | null {
-    return this.parentElement?.querySelector(':scope > video') ?? null;
+    return this.parentElement?.querySelector(':scope > mux-video, :scope > video') ?? null;
   }
 
   // ---------------------------------------------------------------- volume
@@ -873,7 +861,6 @@ export class OrbitControlsElement extends UIElement {
     const pip = this.#pip.value;
     const fs = this.#fs.value;
     const remote = this.#remote.value;
-    const source = this.#source.value;
 
     const paused = playback?.paused ?? true;
     const visible = (controls?.controlsVisible ?? true) || paused || this.#locks.size > 0;
@@ -913,13 +900,6 @@ export class OrbitControlsElement extends UIElement {
     setFly('pip', !!pip?.isPictureInPicture);
     setFly('fullscreen', !!fs?.isFullscreen);
 
-    // Preview video follows the main source
-    const src = source?.currentSrc ?? '';
-    if (src && src !== this.#previewSrc) {
-      this.#previewSrc = src;
-      this.#els.previewVideo.src = src;
-      this.#els.preview.toggleAttribute('data-ready', false);
-    }
 
     this.#renderRing();
     this.#renderPreview();
@@ -971,11 +951,8 @@ export class OrbitControlsElement extends UIElement {
     const t = p! * dur;
     this.#els.previewTime.textContent = formatTime(t);
 
-    const v = this.#els.previewVideo;
-    if (v.readyState >= 1) {
-      if (v.seeking) this.#previewPending = t;
-      else if (Math.abs(v.currentTime - t) > 0.25) v.currentTime = t;
-    }
+    // Frames come from the Mux storyboard track that <mux-video> adds.
+    this.#els.previewThumb.time = t;
 
     // Place the bubble just outside the ring at the pointer's angle, kept in frame.
     const W = this.#W;
