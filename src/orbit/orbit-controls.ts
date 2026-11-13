@@ -165,6 +165,8 @@ export class OrbitControlsElement extends UIElement {
   // Cached render keys so panels only rebuild when their inputs change.
   #captionsKey = '';
   #settingsKey = '';
+  /** Quality picked in the menu, shown at once until the player reports it. */
+  #qualityChoice: string | null = null;
 
   // Layout
   #W = 0;
@@ -233,6 +235,7 @@ export class OrbitControlsElement extends UIElement {
     this.#setVolumeOpen(false);
     this.#captionsKey = '';
     this.#settingsKey = '';
+    this.#qualityChoice = null;
   }
 
   set theater(v: boolean) {
@@ -600,6 +603,8 @@ export class OrbitControlsElement extends UIElement {
         rate?.setPlaybackRate(Number(value));
         break;
       case 'quality':
+        this.#qualityChoice = value!;
+        this.#settingsKey = '';
         quality?.selectVideoRendition(value!);
         break;
       case 'size':
@@ -1207,7 +1212,22 @@ export class OrbitControlsElement extends UIElement {
     const active = quality?.activeVideoRendition;
     const height = video?.videoHeight ?? 0;
     const loop = !!video?.loop;
-    const key = [rates.join(), current, renditions.length, active?.id, height, loop, this.#prefs.size, this.#prefs.position].join('|');
+    // Which rendition is selected. A pick from the menu shows straight away; the
+    // player's own selection takes over once it reports the same one.
+    const reported = renditions.find((r) => r.selected)?.id ?? 'auto';
+    if (this.#qualityChoice === reported) this.#qualityChoice = null;
+    const selectedQuality = this.#qualityChoice ?? reported;
+    const key = [
+      rates.join(),
+      current,
+      renditions.map((r) => r.id).join(),
+      selectedQuality,
+      active?.id,
+      height,
+      loop,
+      this.#prefs.size,
+      this.#prefs.position,
+    ].join('|');
     if (key === this.#settingsKey) return;
     this.#settingsKey = key;
 
@@ -1226,7 +1246,7 @@ export class OrbitControlsElement extends UIElement {
       ? seg(
           'quality',
           [['auto', copy.auto], ...renditions.map((r): [string, string] => [r.id, `${r.height ?? '?'}p`])],
-          renditions.some((r) => r.selected) ? (renditions.find((r) => r.selected)?.id ?? 'auto') : 'auto',
+          selectedQuality,
           copy.quality,
         )
       : `<div class="row row-static"><span class="row-label">${copy.auto}</span><span class="row-meta">${height ? `${height}p` : '—'}</span></div>`;
