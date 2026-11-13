@@ -9,6 +9,7 @@ import './orbit/orbit-controls';
 
 import { films, FALLBACK_SRC, type Film } from './app/films';
 import { createWheel } from './app/wheel';
+import { initThemeSwitch } from './app/theme';
 
 const $ = <T extends Element = HTMLElement>(sel: string, root: ParentNode = document) =>
   root.querySelector(sel) as T;
@@ -174,6 +175,8 @@ const wheel = createWheel({
 const tuck = () => dial.toggleAttribute('data-tucked', window.scrollY > 120);
 window.addEventListener('scroll', tuck, { passive: true });
 tuck();
+
+initThemeSwitch($('.theme-switch'));
 
 loadFilm(0, false);
 wheel.jump(0);

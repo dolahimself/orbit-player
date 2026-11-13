@@ -14,9 +14,69 @@
 
 :root {
   color-scheme: dark;
+  /* Page tokens that aren't Tailwind colours. Dark is the default. */
+  --surface-dial: rgb(18 18 20 / 0.78);
+  --tick: rgb(255 255 255 / 0.16);
+  --tick-major: rgb(255 255 255 / 0.4);
+  --ring: #fff;
+  --selection: rgb(255 255 255 / 0.2);
+  --edge: rgb(255 255 255 / 0.06);
+  --edge-strong: rgb(255 255 255 / 0.1);
+  --kbd-bg: rgb(255 255 255 / 0.06);
+  --kbd-edge: rgb(255 255 255 / 0.12);
+  --shadow-card: 0 30px 80px -30px rgb(0 0 0 / 0.8);
+  --shadow-dial: inset 0 1px 0 rgb(255 255 255 / 0.07), 0 -20px 60px -20px rgb(0 0 0 / 0.7);
+  --ambient-opacity: 0.28;
   --pw: min(1040px, calc(100vw - 48px), calc((100svh - 330px) * 16 / 9));
   --radius-card: 18px;
 }
+
+/* Light theme: follows the system unless a choice is saved (data-theme on <html>). */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    color-scheme: light;
+    --color-ink: #fafafa;
+    --color-raised: #ffffff;
+    --color-line: rgb(0 0 0 / 0.08);
+    --color-fg: #18181b;
+    --color-muted: #6b6b72;
+    --color-faint: #a1a1a8;
+    --surface-dial: rgb(255 255 255 / 0.82);
+    --tick: rgb(0 0 0 / 0.14);
+    --tick-major: rgb(0 0 0 / 0.4);
+    --ring: #18181b;
+    --selection: rgb(0 0 0 / 0.12);
+    --edge: rgb(0 0 0 / 0.06);
+    --edge-strong: rgb(0 0 0 / 0.1);
+    --kbd-bg: #fff;
+    --kbd-edge: rgb(0 0 0 / 0.14);
+    --shadow-card: 0 30px 70px -32px rgb(0 0 0 / 0.35);
+    --shadow-dial: inset 0 1px 0 rgb(255 255 255 / 0.9), 0 -16px 50px -20px rgb(0 0 0 / 0.18);
+    --ambient-opacity: 0.22;
+  }
+}
+:root[data-theme='light'] {
+  color-scheme: light;
+  --color-ink: #fafafa;
+  --color-raised: #ffffff;
+  --color-line: rgb(0 0 0 / 0.08);
+  --color-fg: #18181b;
+  --color-muted: #6b6b72;
+  --color-faint: #a1a1a8;
+  --surface-dial: rgb(255 255 255 / 0.82);
+  --tick: rgb(0 0 0 / 0.14);
+  --tick-major: rgb(0 0 0 / 0.4);
+  --ring: #18181b;
+  --selection: rgb(0 0 0 / 0.12);
+  --edge: rgb(0 0 0 / 0.06);
+  --edge-strong: rgb(0 0 0 / 0.1);
+  --kbd-bg: #fff;
+  --kbd-edge: rgb(0 0 0 / 0.14);
+  --shadow-card: 0 30px 70px -32px rgb(0 0 0 / 0.35);
+  --shadow-dial: inset 0 1px 0 rgb(255 255 255 / 0.9), 0 -16px 50px -20px rgb(0 0 0 / 0.18);
+  --ambient-opacity: 0.22;
+}
+:root[data-theme='dark'] { color-scheme: dark; }
 
 @media (max-width: 640px) {
   :root { --pw: calc(100vw - 32px); }
@@ -30,7 +90,7 @@ body {
   min-height: 100svh;
 }
 
-::selection { background: rgb(255 255 255 / 0.2); }
+::selection { background: var(--selection); }
 
 /* ---------------------------------------------------------------- ambient */
 
@@ -51,7 +111,7 @@ body {
   opacity: 0;
   transition: opacity 900ms var(--ease-out-soft);
 }
-.ambient img[data-on] { opacity: 0.28; }
+.ambient img[data-on] { opacity: var(--ambient-opacity); }
 .ambient::after {
   content: '';
   position: absolute;
@@ -81,7 +141,7 @@ body {
   border-radius: var(--radius-card);
   overflow: hidden;
   background: var(--color-raised);
-  box-shadow: 0 30px 80px -30px rgb(0 0 0 / 0.8);
+  box-shadow: var(--shadow-card);
   will-change: transform, opacity;
   cursor: pointer;
   outline: none;
@@ -97,7 +157,7 @@ body {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
+  box-shadow: inset 0 0 0 1px var(--edge);
   background: linear-gradient(to top, rgb(0 0 0 / 0.55), transparent 45%);
   transition: opacity 300ms;
 }
@@ -111,7 +171,7 @@ body {
   letter-spacing: -0.01em;
 }
 .card-label span { display: block; font-size: 12px; font-weight: 500; color: rgb(255 255 255 / 0.65); }
-.card:focus-visible { box-shadow: 0 0 0 2px #fff; }
+.card:focus-visible { box-shadow: 0 0 0 2px var(--ring); }
 
 .player {
   position: absolute;
@@ -159,7 +219,7 @@ body {
   border-radius: 10px;
   background: rgb(20 20 22 / 0.92);
   font-size: 13px;
-  color: var(--color-fg);
+  color: #f4f4f5; /* sits on the video, so it stays light in both themes */
   opacity: 0;
   pointer-events: none;
   transition: opacity 200ms, translate 260ms var(--ease-out-soft);
@@ -196,9 +256,42 @@ body[data-theater] .card:not([data-active]) { opacity: 0 !important; }
   border-radius: 6px;
   font: 500 12px/1 var(--font-sans);
   color: var(--color-fg);
-  background: rgb(255 255 255 / 0.06);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.12), 0 1px 0 rgb(0 0 0 / 0.4);
+  background: var(--kbd-bg);
+  box-shadow: inset 0 0 0 1px var(--kbd-edge), 0 1px 0 var(--kbd-edge);
 }
+
+/* ---------------------------------------------------------------- theme switch */
+
+.theme-switch {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--kbd-bg);
+  box-shadow: inset 0 0 0 1px var(--color-line);
+}
+.theme-switch button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: background 160ms var(--ease-out-soft), color 160ms var(--ease-out-soft);
+}
+.theme-switch button svg { width: 16px; height: 16px; display: block; }
+@media (hover: hover) {
+  .theme-switch button:hover { color: var(--color-fg); }
+}
+.theme-switch button[aria-checked='true'] {
+  background: var(--color-raised);
+  color: var(--color-fg);
+  box-shadow: 0 0 0 1px var(--color-line), 0 1px 2px rgb(0 0 0 / 0.12);
+}
+.theme-switch button:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
 
 /* ---------------------------------------------------------------- dial */
 
@@ -227,12 +320,10 @@ body[data-theater] .card:not([data-active]) { opacity: 0 !important; }
   width: 360px;
   height: 180px;
   border-radius: 180px 180px 0 0;
-  background: rgb(18 18 20 / 0.78);
+  background: var(--surface-dial);
   -webkit-backdrop-filter: blur(24px) saturate(1.4);
   backdrop-filter: blur(24px) saturate(1.4);
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.07),
-    0 -20px 60px -20px rgb(0 0 0 / 0.7);
+  box-shadow: var(--shadow-dial);
   overflow: hidden;
 }
 .dial::after {
@@ -242,7 +333,7 @@ body[data-theater] .card:not([data-active]) { opacity: 0 !important; }
   right: 0;
   top: 180px;
   bottom: 0;
-  background: rgb(18 18 20 / 0.78);
+  background: var(--surface-dial);
 }
 .dial-rotor {
   position: absolute;
@@ -252,8 +343,8 @@ body[data-theater] .card:not([data-active]) { opacity: 0 !important; }
   height: 0;
 }
 .dial-ticks { position: absolute; left: -180px; top: -180px; width: 360px; height: 360px; overflow: visible; }
-.dial-ticks line { stroke: rgb(255 255 255 / 0.16); stroke-width: 1; stroke-linecap: round; }
-.dial-ticks line.major { stroke: rgb(255 255 255 / 0.4); stroke-width: 1.5; }
+.dial-ticks line { stroke: var(--tick); stroke-width: 1; stroke-linecap: round; }
+.dial-ticks line.major { stroke: var(--tick-major); stroke-width: 1.5; }
 
 .dial-items { position: absolute; inset: 0; }
 .dial-item {
@@ -270,12 +361,12 @@ body[data-theater] .card:not([data-active]) { opacity: 0 !important; }
   background: var(--color-raised);
   cursor: pointer;
   outline: none;
-  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.1);
+  box-shadow: 0 0 0 1px var(--edge-strong);
   transition: box-shadow 200ms, scale 300ms var(--ease-out-soft), opacity 200ms;
 }
 .dial-item img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
-.dial-item[data-active] { box-shadow: 0 0 0 2px #fff, 0 6px 20px rgb(0 0 0 / 0.5); }
-.dial-item:focus-visible { box-shadow: 0 0 0 2px #fff; }
+.dial-item[data-active] { box-shadow: 0 0 0 2px var(--ring), 0 6px 20px rgb(0 0 0 / 0.35); }
+.dial-item:focus-visible { box-shadow: 0 0 0 2px var(--ring); }
 
 .dial-notch {
   position: absolute;
@@ -285,7 +376,7 @@ body[data-theater] .card:not([data-active]) { opacity: 0 !important; }
   height: 4px;
   margin-left: -2px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--ring);
 }
 .dial-center {
   position: absolute;
