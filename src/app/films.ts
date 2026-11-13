@@ -108,7 +108,7 @@ export const films: Film[] = [
       'One of the most used test clips on the web.',
       'Its fur and grass shots drove major work on Blender’s hair rendering.',
     ],
-    ...mux('Dc0000cztHXVRXMuWRd00xbjVoeZ00nP6yE00rArPObSC81w'),
+    ...mux('duBClVrzbiqDEv00X6UWW3cGy02vF9C02vwPHstZ6dV9v00'),
     tint: '95 22% 9%',
   },
   {
@@ -132,7 +132,7 @@ export const films: Film[] = [
       'The first open movie: every source file was published with the film.',
       'Made almost entirely with open-source software.',
     ],
-    ...mux('Y1hb004UtlQSooV1KRx9xOZfBiLSNATcHo2wm4UHNS8g'),
+    ...mux('s6aWm001zQwJIq91cOjnDCo8fMQeHVSRteD5ylWk5RcQ'),
     tint: '275 14% 9%',
   },
 ];
