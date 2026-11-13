@@ -3,8 +3,6 @@ export interface Credit {
   name: string;
 }
 
-// added for deployment test
-
 export interface Film {
   id: string;
   title: string;
