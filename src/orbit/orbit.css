@@ -16,10 +16,13 @@ orbit-controls {
   --orbit-track: rgb(255 255 255 / 0.2);
   --orbit-buffer: rgb(255 255 255 / 0.36);
   --orbit-hover: rgb(255 255 255 / 0.55);
-  --orbit-progress: #fff;
+  /* Control colour: the seek ring, volume level and selected options. Set from Settings. */
+  --orbit-accent: #fff;
+  --orbit-progress: var(--orbit-accent);
+  --orbit-icon: var(--orbit-accent);
   --orbit-surface: rgb(20 20 22 / 0.9);
   --orbit-line: rgb(255 255 255 / 0.08);
-  --orbit-on-bg: rgb(255 255 255 / 0.94);
+  --orbit-on-bg: color-mix(in srgb, var(--orbit-accent) 94%, transparent);
   --orbit-on-fg: #111113;
   --orbit-blur: 18px;
   --orbit-font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -54,6 +57,10 @@ orbit-controls {
 }
 
 orbit-controls button { font: inherit; color: inherit; }
+
+/* Control icons take the chosen control colour (white by default). */
+orbit-controls :is(.seg, .orbit-center, .vol-mute),
+orbit-controls .fly-btn:not([data-on]) { color: var(--orbit-icon); }
 
 /* ---------------------------------------------------------------- shell */
 
@@ -647,6 +654,56 @@ orbit-controls .seg-control button {
 }
 orbit-controls .seg-control button:focus-visible { box-shadow: inset 0 0 0 2px var(--orbit-fg); }
 orbit-controls .seg-control button[aria-checked='true'] { background: var(--orbit-on-bg); color: var(--orbit-on-fg); }
+
+orbit-controls .swatches {
+  display: flex;
+  gap: 10px;
+  padding: 2px 2px 4px;
+}
+orbit-controls .swatch {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--swatch);
+  cursor: pointer;
+  outline: none;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.18);
+  transition: scale var(--dur-fast) var(--ease-spring);
+}
+/* Selected: a ring around the swatch, plus a dot, so it isn't shown by colour alone. */
+orbit-controls .swatch::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--orbit-fg);
+  opacity: 0;
+  scale: 0.85;
+  transition: opacity var(--dur-fast), scale var(--dur-fast) var(--ease-spring);
+}
+orbit-controls .swatch::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: var(--orbit-on-fg);
+  opacity: 0;
+  transition: opacity var(--dur-fast);
+}
+orbit-controls .swatch[aria-checked='true']::after { opacity: 1; scale: 1; }
+orbit-controls .swatch[aria-checked='true']::before { opacity: 1; }
+@media (hover: hover) {
+  orbit-controls .swatch:hover { scale: 1.08; }
+}
+orbit-controls .swatch:active { scale: 0.92; }
+orbit-controls .swatch:focus-visible::after { opacity: 1; scale: 1; box-shadow: 0 0 0 2px var(--orbit-fg), 0 0 0 4px rgb(0 0 0 / 0.6); }
 
 orbit-controls .switch {
   position: relative;

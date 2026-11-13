@@ -50,10 +50,23 @@ type Panel = 'captions' | 'settings' | 'cast' | 'pip' | 'fullscreen';
 type Size = 's' | 'm' | 'l';
 type Position = 'center' | 'bottom' | 'corner';
 
+type Accent = 'white' | 'amber' | 'coral' | 'mint' | 'sky' | 'violet';
+
 interface Prefs {
   size: Size;
   position: Position;
+  accent: Accent;
 }
+
+/** Control colours. White is the default; each stays readable over video. */
+const ACCENTS: Record<Accent, string> = {
+  white: '#ffffff',
+  amber: '#ffb224',
+  coral: '#ff6b6b',
+  mint: '#3ddc97',
+  sky: '#4da3ff',
+  violet: '#a78bfa',
+};
 
 const SIZES: Record<Size, number> = { s: 132, m: 160, l: 192 };
 const PREFS_KEY = 'orbit:prefs';
@@ -85,11 +98,15 @@ function formatTime(sec: number): string {
 function loadPrefs(): Prefs {
   try {
     const raw = localStorage.getItem(PREFS_KEY);
-    if (raw) return { size: 'm', position: 'center', ...JSON.parse(raw) };
+    if (raw) {
+      const p = { size: 'm', position: 'center', accent: 'white', ...JSON.parse(raw) } as Prefs;
+      if (!(p.accent in ACCENTS)) p.accent = 'white';
+      return p;
+    }
   } catch {
     /* storage unavailable */
   }
-  return { size: 'm', position: 'center' };
+  return { size: 'm', position: 'center', accent: 'white' };
 }
 
 function savePrefs(p: Prefs) {
@@ -428,6 +445,7 @@ export class OrbitControlsElement extends UIElement {
       skipBackBadge: q('.skip-badge.back'),
     };
     this.#maskGlass();
+    this.#applyAccent();
   }
 
   // ---------------------------------------------------------------- events
@@ -618,6 +636,12 @@ export class OrbitControlsElement extends UIElement {
         savePrefs(this.#prefs);
         this.#settingsKey = '';
         this.#layout();
+        break;
+      case 'accent':
+        this.#prefs.accent = value as Accent;
+        savePrefs(this.#prefs);
+        this.#settingsKey = '';
+        this.#applyAccent();
         break;
       case 'loop': {
         const video = this.#video();
@@ -1020,6 +1044,13 @@ export class OrbitControlsElement extends UIElement {
 
   }
 
+  /** Set the control colour used by the seek ring, volume level and selected options. */
+  #applyAccent() {
+    const accent = this.#prefs.accent;
+    this.style.setProperty('--orbit-accent', ACCENTS[accent]);
+    this.setAttribute('data-accent', accent);
+  }
+
   /**
    * Mask the frosted backdrop to the button shapes so the gaps between buttons
    * stay clear. A mask (not clip-path: path()) because Chromium ignores path
@@ -1227,6 +1258,7 @@ export class OrbitControlsElement extends UIElement {
       loop,
       this.#prefs.size,
       this.#prefs.position,
+      this.#prefs.accent,
     ].join('|');
     if (key === this.#settingsKey) return;
     this.#settingsKey = key;
@@ -1267,6 +1299,17 @@ export class OrbitControlsElement extends UIElement {
       <div class="field">
         <div class="field-label"><span>${copy.orbitPosition}</span></div>
         ${seg('position', [['center', copy.center], ['bottom', copy.bottom], ['corner', copy.corner]], this.#prefs.position, copy.orbitPosition)}
+      </div>
+      <div class="field">
+        <div class="field-label"><span>${copy.orbitColour}</span><span class="row-meta">${copy.accents[this.#prefs.accent]}</span></div>
+        <div class="swatches" role="radiogroup" aria-label="${copy.orbitColour}">
+          ${(Object.keys(ACCENTS) as Accent[])
+            .map(
+              (a) =>
+                `<button type="button" class="swatch" role="radio" aria-checked="${a === this.#prefs.accent}" aria-label="${copy.accents[a]}" title="${copy.accents[a]}" data-action="accent" data-value="${a}" style="--swatch: ${ACCENTS[a]}"></button>`,
+            )
+            .join('')}
+        </div>
       </div>
       <button type="button" class="row row-btn row-switch" data-action="loop" role="switch" aria-checked="${loop}">
         <span class="row-label">${copy.loop}</span><span class="switch" aria-hidden="true"></span>
