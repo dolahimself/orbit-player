@@ -58,6 +58,14 @@ interface Prefs {
 const SIZES: Record<Size, number> = { s: 132, m: 160, l: 192 };
 const PREFS_KEY = 'orbit:prefs';
 const LONG_PRESS_MS = 380;
+/** Seconds per skip step. */
+const SKIP_STEP = 10;
+/** Hold-to-skip repeat: first gap, fastest gap, and how quickly it speeds up. */
+const SKIP_REPEAT_START = 340;
+const SKIP_REPEAT_MIN = 130;
+const SKIP_REPEAT_EASE = 0.84;
+/** How long the running total stays up after the last skip. */
+const SKIP_SETTLE_MS = 900;
 /** Degrees of rotation for a full 0–100% volume sweep. */
 const VOLUME_SWEEP = 300;
 const FLY_GAP = 12;
@@ -143,6 +151,17 @@ export class OrbitControlsElement extends UIElement {
   #pressTimer = 0;
   #suppressClick = false;
 
+  // Skip bursts: taps in quick succession or a held skip button add up, like Netflix.
+  #skipDir: 1 | -1 | 0 = 0;
+  #skipTotal = 0;
+  #skipTarget = 0;
+  #skipHolding = false;
+  #skipHoldTimer = 0;
+  #skipRepeatTimer = 0;
+  #skipSettleTimer = 0;
+  #skipGap = SKIP_REPEAT_START;
+  #skipSuppressClick = false;
+
   // Cached render keys so panels only rebuild when their inputs change.
   #captionsKey = '';
   #settingsKey = '';
@@ -177,6 +196,12 @@ export class OrbitControlsElement extends UIElement {
     previewTime: HTMLElement;
     ringA11y: HTMLElement;
     live: HTMLElement;
+    skipFwd: HTMLElement;
+    skipBack: HTMLElement;
+    skipFwdNum: HTMLElement;
+    skipBackNum: HTMLElement;
+    skipFwdBadge: HTMLElement;
+    skipBackBadge: HTMLElement;
   };
 
   connectedCallback() {
@@ -199,6 +224,7 @@ export class OrbitControlsElement extends UIElement {
     this.#releaseLock?.();
     this.#releaseLock = null;
     this.#locks.clear();
+    this.#endSkip(false);
   }
 
   /** Close every popup; used when the app swaps films. */
@@ -321,6 +347,7 @@ export class OrbitControlsElement extends UIElement {
         <media-seek-button class="seg seg-right" seconds="10">
           ${segSvg('right')}<span class="seg-icon seek-icon">${icon('seek')}<b>10</b></span>
         </media-seek-button>
+        <span class="skip-badge fwd" aria-hidden="true"></span>
         <button type="button" class="seg seg-bottom" aria-label="${copy.volume}" aria-expanded="false">
           ${segSvg('bottom')}
           <span class="seg-icon vol-icon">
@@ -332,6 +359,7 @@ export class OrbitControlsElement extends UIElement {
         <media-seek-button class="seg seg-left" seconds="-10">
           ${segSvg('left')}<span class="seg-icon seek-icon back">${icon('seek')}<b>10</b></span>
         </media-seek-button>
+        <span class="skip-badge back" aria-hidden="true"></span>
 
         <media-play-button class="orbit-center">
           <span class="center-icon ci-play">${icon('play')}</span>
@@ -389,6 +417,12 @@ export class OrbitControlsElement extends UIElement {
       previewTime: q('.preview-time'),
       ringA11y: q('.ring-a11y'),
       live: q('[data-slot="live"]'),
+      skipFwd: q('.seg-right'),
+      skipBack: q('.seg-left'),
+      skipFwdNum: q('.seg-right .seek-icon b'),
+      skipBackNum: q('.seg-left .seek-icon b'),
+      skipFwdBadge: q('.skip-badge.fwd'),
+      skipBackBadge: q('.skip-badge.back'),
     };
     this.#maskGlass();
   }
@@ -435,6 +469,33 @@ export class OrbitControlsElement extends UIElement {
     on(e.bottom, 'pointerup', (ev: PointerEvent) => this.#volPointerUp(ev));
     on(e.bottom, 'pointercancel', (ev: PointerEvent) => this.#volPointerUp(ev));
     on(e.bottom, 'contextmenu', (ev: Event) => ev.preventDefault());
+
+    // Skip buttons: a tap skips 10 s (Video.js does the seek); holding keeps skipping.
+    for (const [el, dir] of [
+      [e.skipFwd, 1],
+      [e.skipBack, -1],
+    ] as const) {
+      on(el, 'pointerdown', (ev: PointerEvent) => this.#skipPointerDown(ev, dir));
+      on(el, 'pointerup', (ev: PointerEvent) => this.#skipPointerUp(ev));
+      on(el, 'pointercancel', (ev: PointerEvent) => this.#skipPointerUp(ev));
+      on(el, 'lostpointercapture', (ev: PointerEvent) => this.#skipPointerUp(ev));
+      on(el, 'contextmenu', (ev: Event) => ev.preventDefault());
+      // A plain tap (or Enter/Space) still counts toward the running total.
+      on(el, 'click', () => this.#skipTap(dir));
+    }
+    // After a hold, swallow the click that follows release so it doesn't add 10 s more.
+    on(
+      e.orbit,
+      'click',
+      (ev: MouseEvent) => {
+        if (!this.#skipSuppressClick) return;
+        if (!(ev.target as Element).closest('.seg-right, .seg-left')) return;
+        this.#skipSuppressClick = false;
+        ev.stopPropagation();
+        ev.preventDefault();
+      },
+      { capture: true },
+    );
 
     // Keep the volume slider open while it's being used
     on(e.volume, 'pointerenter', () => this.#holdVolume());
@@ -641,6 +702,135 @@ export class OrbitControlsElement extends UIElement {
     this.#render();
   }
 
+  // ---------------------------------------------------------------- skip bursts
+
+  #skipPointerDown(ev: PointerEvent, dir: 1 | -1) {
+    if (ev.button !== 0) return;
+    this.#skipSuppressClick = false;
+    clearTimeout(this.#skipHoldTimer);
+    const el = ev.currentTarget as Element;
+    const id = ev.pointerId;
+    this.#skipHoldTimer = window.setTimeout(() => {
+      const time = this.#time.value;
+      if (!time || !time.duration) return;
+      el.setPointerCapture?.(id);
+      this.#skipHolding = true;
+      this.#skipSuppressClick = true;
+      this.#skipGap = SKIP_REPEAT_START;
+      if (this.#skipDir !== dir) this.#resetSkipBurst(dir);
+      // Continue from where an earlier tap in this burst was heading, if any.
+      if (!this.#skipTotal) this.#skipTarget = time.currentTime;
+      this.toggleAttribute('data-skip-holding', true);
+      this.#lock('skip', true);
+      navigator.vibrate?.(8);
+      this.#skipStep(dir);
+    }, LONG_PRESS_MS);
+  }
+
+  #skipPointerUp(ev: PointerEvent) {
+    clearTimeout(this.#skipHoldTimer);
+    if (!this.#skipHolding) return;
+    (ev.currentTarget as Element).releasePointerCapture?.(ev.pointerId);
+    this.#endSkip(true);
+  }
+
+  /** One held step: seek by 10 s from the running target, then schedule the next. */
+  #skipStep(dir: 1 | -1) {
+    if (!this.#skipHolding) return;
+    const time = this.#time.value;
+    if (!time || !time.duration) return this.#endSkip(true);
+    const next = Math.min(time.duration, Math.max(0, this.#skipTarget + dir * SKIP_STEP));
+    const moved = Math.abs(next - this.#skipTarget) > 0.01;
+    if (moved) {
+      this.#skipTarget = next;
+      time.seek(next);
+      this.#addToBurst(dir, SKIP_STEP);
+    }
+    // Stop at either end of the video.
+    if (!moved || next <= 0 || next >= time.duration) return;
+    this.#skipRepeatTimer = window.setTimeout(() => this.#skipStep(dir), this.#skipGap);
+    this.#skipGap = Math.max(SKIP_REPEAT_MIN, this.#skipGap * SKIP_REPEAT_EASE);
+  }
+
+  /** A tap: Video.js already seeked, so only count it. */
+  #skipTap(dir: 1 | -1) {
+    if (this.#skipHolding) return;
+    const time = this.#time.value;
+    if (this.#skipDir !== dir || !this.#skipTotal) {
+      this.#resetSkipBurst(dir);
+      this.#skipTarget = time?.currentTime ?? 0;
+    }
+    const dur = time?.duration ?? Infinity;
+    this.#skipTarget = Math.min(dur, Math.max(0, this.#skipTarget + dir * SKIP_STEP));
+    this.#addToBurst(dir, SKIP_STEP);
+    this.#scheduleSkipSettle();
+  }
+
+  #resetSkipBurst(dir: 1 | -1) {
+    if (this.#skipDir && this.#skipDir !== dir) this.#showSkip(this.#skipDir, 0);
+    this.#skipDir = dir;
+    this.#skipTotal = 0;
+  }
+
+  #addToBurst(dir: 1 | -1, seconds: number) {
+    this.#skipTotal += seconds;
+    this.#showSkip(dir, this.#skipTotal);
+    this.#nudgeSkipIcon(dir);
+    clearTimeout(this.#skipSettleTimer);
+  }
+
+  #scheduleSkipSettle() {
+    clearTimeout(this.#skipSettleTimer);
+    this.#skipSettleTimer = window.setTimeout(() => this.#settleSkip(), SKIP_SETTLE_MS);
+  }
+
+  #endSkip(settle: boolean) {
+    clearTimeout(this.#skipHoldTimer);
+    clearTimeout(this.#skipRepeatTimer);
+    if (this.#skipHolding) {
+      this.#skipHolding = false;
+      this.toggleAttribute('data-skip-holding', false);
+      this.#lock('skip', false);
+    }
+    if (settle) this.#scheduleSkipSettle();
+    else {
+      clearTimeout(this.#skipSettleTimer);
+      this.#settleSkip(false);
+    }
+  }
+
+  #settleSkip(announce = true) {
+    const dir = this.#skipDir;
+    const total = this.#skipTotal;
+    if (dir) this.#showSkip(dir, 0);
+    if (announce && dir && total > SKIP_STEP) {
+      this.#announce(`${dir > 0 ? copy.skippedForward : copy.skippedBack} ${total} ${copy.seconds}`);
+    }
+    this.#skipDir = 0;
+    this.#skipTotal = 0;
+  }
+
+  /** Show the running total on the arrow and in the badge beside it; 0 resets. */
+  #showSkip(dir: 1 | -1, total: number) {
+    const num = dir > 0 ? this.#els.skipFwdNum : this.#els.skipBackNum;
+    const badge = dir > 0 ? this.#els.skipFwdBadge : this.#els.skipBackBadge;
+    num.textContent = String(total || SKIP_STEP);
+    num.toggleAttribute('data-wide', total >= 100);
+    // A single tap needs no badge; the arrow already says 10.
+    const show = total > SKIP_STEP;
+    if (show) badge.textContent = `${dir > 0 ? '+' : '−'}${total}s`;
+    badge.toggleAttribute('data-show', show);
+  }
+
+  #nudgeSkipIcon(dir: 1 | -1) {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const svg = (dir > 0 ? this.#els.skipFwd : this.#els.skipBack).querySelector('.seek-icon > svg');
+    svg?.animate(
+      [{ rotate: '0deg' }, { rotate: `${dir * 36}deg` }, { rotate: '0deg' }],
+      { duration: 260, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' },
+    );
+  }
+
   // ---------------------------------------------------------------- seek ring
 
   #pFromEvent(ev: PointerEvent): number {
@@ -819,6 +1009,9 @@ export class OrbitControlsElement extends UIElement {
     s.setProperty('--panel-w', `${panelW}px`);
     s.setProperty('--panel-max', compact ? `${H - EDGE * 2}px` : `${panelMax}px`);
     s.setProperty('--fly-scale', String(Math.min(1, (W - EDGE * 2) / flyW)));
+    // Skip totals sit beside the ring; with no room at a side, they move above it.
+    const badgeRoom = 84;
+    this.toggleAttribute('data-skip-above', cx + size / 2 + badgeRoom > W || cx - size / 2 - badgeRoom < 0);
 
   }
 

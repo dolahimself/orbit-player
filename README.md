@@ -22,6 +22,8 @@ npm works too: `npm install && npm run dev`.
 | Do this | And this happens |
 | --- | --- |
 | Click the centre | Play or pause. The current time shows under the icon |
+| Click the left or right button | Skip back or forward 10 seconds. Quick taps add up, and a badge shows the total |
+| Press and hold the left or right button | Keep skipping 10 seconds at a time, faster the longer you hold, like Netflix. Let go to stop |
 | Hover the ring | A thumbnail of that moment appears, and the ring lights up between the playhead and your pointer |
 | Drag around the ring | Scrub. The blob and the centre time follow you, and the preview frame updates as you go |
 | Click the bottom button | A horizontal volume slider opens below the orbit |

@@ -258,6 +258,44 @@ orbit-controls .seek-icon b {
   font-variant-numeric: tabular-nums;
   padding-top: 4%;
 }
+orbit-controls .seek-icon b[data-wide] { font-size: calc(var(--orbit-size) * 0.032); }
+/* While a skip is held, the arrow nudges on each step instead of staying turned. */
+orbit-controls[data-skip-holding] .seg:active .seek-icon > svg { rotate: 0deg; }
+
+/* Running total for a skip burst, beside the button it belongs to. */
+orbit-controls .skip-badge {
+  position: absolute;
+  top: 50%;
+  z-index: 3;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--orbit-fill);
+  -webkit-backdrop-filter: blur(var(--orbit-blur)) saturate(1.4);
+  backdrop-filter: blur(var(--orbit-blur)) saturate(1.4);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  scale: 0.9;
+  transition:
+    opacity var(--dur-fast) var(--ease-out),
+    scale var(--dur) var(--ease-spring),
+    translate var(--dur) var(--ease-out);
+}
+orbit-controls .skip-badge.fwd { left: calc(100% + 10px); translate: -8px -50%; }
+orbit-controls .skip-badge.back { right: calc(100% + 10px); translate: 8px -50%; }
+orbit-controls .skip-badge[data-show] { opacity: 1; scale: 1; translate: 0 -50%; }
+/* No room at the side (corner position, narrow players): show it above the orbit. */
+orbit-controls[data-skip-above] .skip-badge {
+  top: auto;
+  bottom: calc(100% + 10px);
+}
+orbit-controls[data-skip-above] .skip-badge.fwd { left: 58%; translate: 0 6px; }
+orbit-controls[data-skip-above] .skip-badge.back { right: 58%; translate: 0 6px; }
+orbit-controls[data-skip-above] .skip-badge[data-show] { translate: 0 0; }
+orbit-controls[data-skip-above][data-menu-open] .skip-badge { opacity: 0; }
 
 /* Menu bars fold into a cross. */
 orbit-controls .icon-menu .bar {

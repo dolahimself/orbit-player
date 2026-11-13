@@ -46,4 +46,7 @@ export const copy = {
   theaterHint: 'Widen the player and hide the other films.',
   fsUnsupported: 'Full screen isn’t available here.',
   keys: 'Shortcut',
+  skippedForward: 'Skipped forward',
+  skippedBack: 'Skipped back',
+  seconds: 'seconds',
 };
